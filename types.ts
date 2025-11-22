@@ -9,6 +9,7 @@ export interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   holiday?: Holiday;
+  lunarStr?: string;
 }
 
 export interface AIAnalysisResult {
@@ -20,4 +21,12 @@ export interface AIAnalysisResult {
 export enum LayoutMode {
   FULL_BG = 'FULL_BG',
   SPLIT_TOP = 'SPLIT_TOP',
+  HORIZON = 'HORIZON',
+}
+
+export enum GridStyle {
+  STANDARD = 'STANDARD',
+  MINIMAL = 'MINIMAL',
+  BOXED = 'BOXED',
+  ROUNDED = 'ROUNDED',
 }

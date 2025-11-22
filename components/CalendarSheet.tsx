@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarGrid } from './CalendarGrid';
-import { LayoutMode } from '../types';
+import { LayoutMode, GridStyle } from '../types';
 
 interface CalendarSheetProps {
   year: number;
@@ -10,6 +10,10 @@ interface CalendarSheetProps {
   layout: LayoutMode;
   primaryColor: string;
   secondaryColor: string;
+  fontFamily?: string;
+  captionFontSize?: number;
+  gridStyle?: GridStyle;
+  showLunar?: boolean;
 }
 
 export const CalendarSheet: React.FC<CalendarSheetProps> = ({
@@ -20,6 +24,10 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
   layout,
   primaryColor,
   secondaryColor,
+  fontFamily = 'Quicksand, sans-serif',
+  captionFontSize = 18,
+  gridStyle = GridStyle.STANDARD,
+  showLunar = false
 }) => {
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -27,14 +35,17 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
   ];
   const monthName = monthNames[month];
 
-  // A4 dimensions in Tailwind arbitrary values for preview: 210mm x 297mm
-  // We use a wrapper to handle scaling for smaller screens, but the inner div is fixed size.
+  // Determine dimensions based on layout
+  const isLandscape = layout === LayoutMode.HORIZON;
+  const width = isLandscape ? '297mm' : '210mm';
+  const height = isLandscape ? '210mm' : '296mm';
+
   return (
     <div 
       className="bg-white shadow-2xl print:shadow-none print-container relative mx-auto overflow-hidden flex flex-col"
-      style={{ width: '210mm', height: '296mm' }} // Slight reduction to fit some printers better
+      style={{ width, height }} 
     >
-      {/* Layout: Split Top (Standard Calendar) */}
+      {/* Layout: Split Top (Standard Portrait) */}
       {layout === LayoutMode.SPLIT_TOP && (
         <>
           {/* Top Half: Image */}
@@ -54,7 +65,12 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
             {/* Quote Overlay on Image */}
             {quote && (
               <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-right">
-                <p className="text-white italic font-serif text-lg drop-shadow-md">“{quote}”</p>
+                <p 
+                  className="text-white drop-shadow-md leading-relaxed" 
+                  style={{ fontFamily, fontSize: `${captionFontSize}px` }}
+                >
+                  “{quote}”
+                </p>
               </div>
             )}
           </div>
@@ -75,13 +91,15 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
                 month={month} 
                 textColor={primaryColor} 
                 accentColor={secondaryColor} 
+                gridStyle={gridStyle}
+                showLunar={showLunar}
               />
             </div>
           </div>
         </>
       )}
 
-      {/* Layout: Full Background */}
+      {/* Layout: Full Background (Portrait) */}
       {layout === LayoutMode.FULL_BG && (
         <>
           <div className="absolute inset-0 z-0 bg-gray-100">
@@ -104,7 +122,12 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
              <div className="flex-1 flex items-start justify-end pt-8">
                 {quote && (
                   <div className="bg-white/80 backdrop-blur-md p-4 rounded-xl max-w-md shadow-lg">
-                     <p className="text-gray-700 italic font-serif text-lg">“{quote}”</p>
+                     <p 
+                       className="text-gray-700 leading-relaxed" 
+                       style={{ fontFamily, fontSize: `${captionFontSize}px` }}
+                      >
+                        “{quote}”
+                     </p>
                   </div>
                 )}
              </div>
@@ -125,10 +148,65 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
                   month={month} 
                   textColor="#334155" 
                   accentColor="#dc2626" 
+                  gridStyle={gridStyle}
+                  showLunar={showLunar}
                 />
              </div>
           </div>
         </>
+      )}
+
+      {/* Layout: Horizon (Landscape) */}
+      {layout === LayoutMode.HORIZON && (
+        <div className="w-full h-full flex flex-row">
+           {/* Left Side: Image */}
+           <div className="w-[45%] h-full relative bg-gray-100 overflow-hidden">
+              {imageSrc ? (
+                <img 
+                  src={imageSrc} 
+                  alt="Calendar background" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 bg-slate-50">
+                  <span className="text-xl">Select Image</span>
+                </div>
+              )}
+              {/* Vertical Quote Overlay */}
+              {quote && (
+                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-8">
+                   <p 
+                     className="text-white leading-relaxed" 
+                     style={{ fontFamily, fontSize: `${captionFontSize}px` }}
+                    >
+                      “{quote}”
+                   </p>
+                </div>
+              )}
+           </div>
+
+           {/* Right Side: Grid */}
+           <div className="w-[55%] h-full p-8 flex flex-col bg-white">
+              <div className="flex items-center justify-between mb-6 border-b-2 pb-4" style={{ borderColor: secondaryColor }}>
+                 <div className="flex flex-col">
+                    <span className="text-5xl font-light uppercase tracking-tight" style={{ color: primaryColor }}>{monthName}</span>
+                    <span className="text-sm font-bold tracking-[0.3em] text-slate-400 uppercase">Hong Kong</span>
+                 </div>
+                 <span className="text-6xl font-bold text-slate-200">{year}</span>
+              </div>
+
+              <div className="flex-1">
+                 <CalendarGrid 
+                   year={year} 
+                   month={month} 
+                   textColor={primaryColor} 
+                   accentColor={secondaryColor} 
+                   gridStyle={gridStyle}
+                   showLunar={showLunar}
+                 />
+              </div>
+           </div>
+        </div>
       )}
     </div>
   );

@@ -1,23 +1,52 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { CalendarSheet } from './components/CalendarSheet';
-import { LayoutMode, AIAnalysisResult } from './types';
+import { LayoutMode, GridStyle } from './types';
 import { analyzeImageForCalendar } from './services/geminiService';
-import { ArrowDownTrayIcon, SparklesIcon, PrinterIcon, PhotoIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, PrinterIcon, PhotoIcon, CalendarDaysIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 const App: React.FC = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [layout, setLayout] = useState<LayoutMode>(LayoutMode.SPLIT_TOP);
+  
+  // Customization State
   const [quote, setQuote] = useState<string>('');
   const [primaryColor, setPrimaryColor] = useState<string>('#1e293b');
   const [secondaryColor, setSecondaryColor] = useState<string>('#ef4444');
-  
+  const [fontFamily, setFontFamily] = useState<string>('"Quicksand", sans-serif');
+  const [captionFontSize, setCaptionFontSize] = useState<number>(18);
+  const [gridStyle, setGridStyle] = useState<GridStyle>(GridStyle.STANDARD);
+  const [showLunar, setShowLunar] = useState<boolean>(true);
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fontOptions = [
+    { name: 'Modern (Default)', value: '"Quicksand", sans-serif' },
+    { name: 'Elegant Serif', value: '"Playfair Display", serif' },
+    { name: 'Handwriting', value: '"Dancing Script", cursive' },
+    { name: 'Retro Typewriter', value: '"Courier Prime", monospace' },
+  ];
+
+  // Inject print page size style based on layout
+  useEffect(() => {
+    const styleId = 'print-orientation-style';
+    let styleTag = document.getElementById(styleId) as HTMLStyleElement;
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      document.head.appendChild(styleTag);
+    }
+
+    if (layout === LayoutMode.HORIZON) {
+      styleTag.innerHTML = `@media print { @page { size: landscape; } }`;
+    } else {
+      styleTag.innerHTML = `@media print { @page { size: portrait; } }`;
+    }
+  }, [layout]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,7 +97,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Sidebar Controls - Hidden on Print */}
-      <div className="w-full lg:w-96 bg-white border-r border-slate-200 p-6 flex flex-col gap-6 no-print overflow-y-auto h-auto lg:h-screen z-20 shadow-lg">
+      <div className="w-full lg:w-96 bg-white border-r border-slate-200 p-6 flex flex-col gap-6 no-print overflow-y-auto h-auto lg:h-screen z-20 shadow-lg scrollbar-thin">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <CalendarDaysIcon className="w-8 h-8 text-blue-600" />
@@ -122,20 +151,99 @@ const App: React.FC = () => {
         {/* Layout Selection */}
         <div className="space-y-3">
           <label className="block text-sm font-medium text-slate-700">Layout Style</label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
              <button
                onClick={() => setLayout(LayoutMode.SPLIT_TOP)}
-               className={`px-3 py-2 text-sm rounded-md border ${layout === LayoutMode.SPLIT_TOP ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
+               className={`px-2 py-2 text-xs font-medium rounded-md border text-center ${layout === LayoutMode.SPLIT_TOP ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
              >
-               Classic Split
+               Classic
              </button>
              <button
                onClick={() => setLayout(LayoutMode.FULL_BG)}
-               className={`px-3 py-2 text-sm rounded-md border ${layout === LayoutMode.FULL_BG ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
+               className={`px-2 py-2 text-xs font-medium rounded-md border text-center ${layout === LayoutMode.FULL_BG ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
              >
-               Full Background
+               Full
+             </button>
+             <button
+               onClick={() => setLayout(LayoutMode.HORIZON)}
+               className={`px-2 py-2 text-xs font-medium rounded-md border text-center ${layout === LayoutMode.HORIZON ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
+             >
+               Horizon
              </button>
           </div>
+        </div>
+
+        {/* Calendar Grid Options */}
+        <div className="space-y-3 border-t pt-4 border-slate-200">
+           <div className="flex items-center justify-between">
+             <label className="block text-sm font-medium text-slate-700">Calendar Grid</label>
+             <Cog6ToothIcon className="w-4 h-4 text-slate-400"/>
+           </div>
+           
+           {/* Style Buttons */}
+           <div className="grid grid-cols-4 gap-1">
+             {[GridStyle.STANDARD, GridStyle.MINIMAL, GridStyle.BOXED, GridStyle.ROUNDED].map(style => (
+               <button
+                 key={style}
+                 onClick={() => setGridStyle(style)}
+                 className={`px-1 py-2 text-[10px] uppercase font-bold rounded border text-center ${gridStyle === style ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-500 border-slate-200'}`}
+               >
+                 {style.toLowerCase()}
+               </button>
+             ))}
+           </div>
+
+           {/* Toggle Lunar */}
+           <div className="flex items-center mt-2">
+              <input 
+                id="showLunar" 
+                type="checkbox" 
+                checked={showLunar}
+                onChange={(e) => setShowLunar(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="showLunar" className="ml-2 block text-sm text-slate-700">
+                Show Lunar Date (農曆)
+              </label>
+           </div>
+        </div>
+
+        {/* Caption Controls */}
+        <div className="space-y-3 pt-4 border-t border-slate-200">
+           <label className="block text-sm font-medium text-slate-700">Caption Settings</label>
+           <textarea
+             value={quote}
+             onChange={(e) => setQuote(e.target.value)}
+             rows={2}
+             className="block w-full rounded-md border-slate-300 border px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+             placeholder="Add a quote..."
+           />
+           
+           <div className="flex gap-2">
+             <div className="flex-1">
+               <label className="block text-xs text-slate-500 mb-1">Font</label>
+               <select
+                 value={fontFamily}
+                 onChange={(e) => setFontFamily(e.target.value)}
+                 className="block w-full rounded-md border-slate-300 border px-2 py-1 text-xs"
+               >
+                 {fontOptions.map((option) => (
+                   <option key={option.name} value={option.value}>{option.name}</option>
+                 ))}
+               </select>
+             </div>
+             <div className="w-20">
+               <label className="block text-xs text-slate-500 mb-1">Size: {captionFontSize}px</label>
+               <input 
+                  type="range" 
+                  min="12" 
+                  max="48" 
+                  value={captionFontSize}
+                  onChange={(e) => setCaptionFontSize(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+               />
+             </div>
+           </div>
         </div>
 
         {/* AI Features */}
@@ -157,18 +265,6 @@ const App: React.FC = () => {
             {isAnalyzing ? 'Analyzing...' : 'Enhance with AI'}
           </button>
           {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
-        </div>
-
-        {/* Manual Overrides (Optional) */}
-        <div className="space-y-3 pt-4 border-t border-slate-200">
-           <label className="block text-sm font-medium text-slate-700">Manual Caption</label>
-           <textarea
-             value={quote}
-             onChange={(e) => setQuote(e.target.value)}
-             rows={2}
-             className="block w-full rounded-md border-slate-300 border px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-             placeholder="Add a quote..."
-           />
         </div>
         
         <div className="flex-1"></div>
@@ -194,6 +290,10 @@ const App: React.FC = () => {
             layout={layout}
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
+            fontFamily={fontFamily}
+            captionFontSize={captionFontSize}
+            gridStyle={gridStyle}
+            showLunar={showLunar}
           />
         </div>
       </div>
