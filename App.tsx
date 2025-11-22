@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [secondaryColor, setSecondaryColor] = useState<string>('#ef4444');
   const [fontFamily, setFontFamily] = useState<string>('"Quicksand", sans-serif');
   const [captionFontSize, setCaptionFontSize] = useState<number>(18);
+  const [captionColor, setCaptionColor] = useState<string>('#ffffff');
   const [gridStyle, setGridStyle] = useState<GridStyle>(GridStyle.STANDARD);
   const [showLunar, setShowLunar] = useState<boolean>(true);
 
@@ -42,10 +43,19 @@ const App: React.FC = () => {
     }
 
     if (layout === LayoutMode.HORIZON) {
-      styleTag.innerHTML = `@media print { @page { size: landscape; } }`;
+      styleTag.innerHTML = `@media print { @page { size: landscape; margin: 0; } }`;
     } else {
-      styleTag.innerHTML = `@media print { @page { size: portrait; } }`;
+      styleTag.innerHTML = `@media print { @page { size: portrait; margin: 0; } }`;
     }
+
+    // Set default caption color based on layout only if it hasn't been manually customized significantly?
+    // For now, we reset to a safe default when layout switches to ensure readability.
+    if (layout === LayoutMode.FULL_BG) {
+      setCaptionColor('#334155'); // Dark slate for white box
+    } else {
+      setCaptionColor('#ffffff'); // White for image overlay
+    }
+
   }, [layout]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +88,9 @@ const App: React.FC = () => {
     try {
       const result = await analyzeImageForCalendar(imageSrc, monthName, year);
       if (result) {
-        setQuote(result.quote);
+        // Sanitize quote to remove start/end quotes if AI included them
+        const cleanQuote = result.quote.replace(/^["']|["']$/g, '').trim();
+        setQuote(cleanQuote);
         setPrimaryColor(result.primaryColor);
         setSecondaryColor(result.secondaryColor);
       }
@@ -91,11 +103,12 @@ const App: React.FC = () => {
   };
 
   const handlePrint = () => {
+    // Directly call window.print() to ensure browser compliance with user gestures
     window.print();
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="min-h-screen flex flex-col lg:flex-row main-layout">
       {/* Sidebar Controls - Hidden on Print */}
       <div className="w-full lg:w-96 bg-white border-r border-slate-200 p-6 flex flex-col gap-6 no-print overflow-y-auto h-auto lg:h-screen z-20 shadow-lg scrollbar-thin">
         <div>
@@ -216,11 +229,11 @@ const App: React.FC = () => {
              onChange={(e) => setQuote(e.target.value)}
              rows={2}
              className="block w-full rounded-md border-slate-300 border px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-             placeholder="Add a quote..."
+             placeholder="Add a quote (no quotes needed)..."
            />
            
-           <div className="flex gap-2">
-             <div className="flex-1">
+           <div className="grid grid-cols-1 gap-3">
+             <div>
                <label className="block text-xs text-slate-500 mb-1">Font</label>
                <select
                  value={fontFamily}
@@ -232,16 +245,30 @@ const App: React.FC = () => {
                  ))}
                </select>
              </div>
-             <div className="w-20">
-               <label className="block text-xs text-slate-500 mb-1">Size: {captionFontSize}px</label>
-               <input 
-                  type="range" 
-                  min="12" 
-                  max="48" 
-                  value={captionFontSize}
-                  onChange={(e) => setCaptionFontSize(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-               />
+             
+             <div className="flex gap-3">
+               <div className="flex-1">
+                 <label className="block text-xs text-slate-500 mb-1">Size: {captionFontSize}px</label>
+                 <input 
+                    type="range" 
+                    min="12" 
+                    max="64" 
+                    value={captionFontSize}
+                    onChange={(e) => setCaptionFontSize(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                 />
+               </div>
+               <div>
+                 <label className="block text-xs text-slate-500 mb-1">Color</label>
+                 <div className="flex items-center">
+                    <input 
+                      type="color" 
+                      value={captionColor}
+                      onChange={(e) => setCaptionColor(e.target.value)}
+                      className="h-8 w-14 rounded border border-slate-300 p-0.5 cursor-pointer"
+                    />
+                 </div>
+               </div>
              </div>
            </div>
         </div>
@@ -271,8 +298,9 @@ const App: React.FC = () => {
 
         {/* Print Action */}
         <button 
+          type="button"
           onClick={handlePrint}
-          className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl hover:bg-slate-800 transition-colors font-medium text-lg"
+          className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl hover:bg-slate-800 transition-colors font-medium text-lg cursor-pointer"
         >
           <PrinterIcon className="w-6 h-6" />
           Print Calendar
@@ -280,8 +308,8 @@ const App: React.FC = () => {
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 bg-slate-200 overflow-auto p-4 lg:p-10 flex justify-center items-start min-h-screen">
-        <div className="scale-[0.45] sm:scale-[0.6] md:scale-[0.75] xl:scale-[0.9] 2xl:scale-100 origin-top transition-transform duration-300 shadow-2xl print:scale-100 print:shadow-none print:origin-top-left">
+      <div className="flex-1 bg-slate-200 overflow-auto p-4 lg:p-10 flex justify-center items-start min-h-screen preview-area">
+        <div className="calendar-scale-wrapper scale-[0.45] sm:scale-[0.6] md:scale-[0.75] xl:scale-[0.9] 2xl:scale-100 origin-top transition-transform duration-300 shadow-2xl">
           <CalendarSheet
             year={year}
             month={month}
@@ -292,6 +320,7 @@ const App: React.FC = () => {
             secondaryColor={secondaryColor}
             fontFamily={fontFamily}
             captionFontSize={captionFontSize}
+            captionColor={captionColor}
             gridStyle={gridStyle}
             showLunar={showLunar}
           />

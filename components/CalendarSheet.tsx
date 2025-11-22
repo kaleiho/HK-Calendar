@@ -12,6 +12,7 @@ interface CalendarSheetProps {
   secondaryColor: string;
   fontFamily?: string;
   captionFontSize?: number;
+  captionColor?: string;
   gridStyle?: GridStyle;
   showLunar?: boolean;
 }
@@ -26,6 +27,7 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
   secondaryColor,
   fontFamily = 'Quicksand, sans-serif',
   captionFontSize = 18,
+  captionColor = '#ffffff',
   gridStyle = GridStyle.STANDARD,
   showLunar = false
 }) => {
@@ -42,7 +44,7 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
 
   return (
     <div 
-      className="bg-white shadow-2xl print:shadow-none print-container relative mx-auto overflow-hidden flex flex-col"
+      className="bg-white shadow-2xl print-container relative mx-auto overflow-hidden flex flex-col"
       style={{ width, height }} 
     >
       {/* Layout: Split Top (Standard Portrait) */}
@@ -66,10 +68,10 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
             {quote && (
               <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-6 text-right">
                 <p 
-                  className="text-white drop-shadow-md leading-relaxed" 
-                  style={{ fontFamily, fontSize: `${captionFontSize}px` }}
+                  className="drop-shadow-md leading-relaxed" 
+                  style={{ fontFamily, fontSize: `${captionFontSize}px`, color: captionColor }}
                 >
-                  “{quote}”
+                  {quote}
                 </p>
               </div>
             )}
@@ -123,10 +125,10 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
                 {quote && (
                   <div className="bg-white/80 backdrop-blur-md p-4 rounded-xl max-w-md shadow-lg">
                      <p 
-                       className="text-gray-700 leading-relaxed" 
-                       style={{ fontFamily, fontSize: `${captionFontSize}px` }}
+                       className="leading-relaxed" 
+                       style={{ fontFamily, fontSize: `${captionFontSize}px`, color: captionColor }}
                       >
-                        “{quote}”
+                        {quote}
                      </p>
                   </div>
                 )}
@@ -176,10 +178,10 @@ export const CalendarSheet: React.FC<CalendarSheetProps> = ({
               {quote && (
                 <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-8">
                    <p 
-                     className="text-white leading-relaxed" 
-                     style={{ fontFamily, fontSize: `${captionFontSize}px` }}
+                     className="leading-relaxed" 
+                     style={{ fontFamily, fontSize: `${captionFontSize}px`, color: captionColor }}
                     >
-                      “{quote}”
+                      {quote}
                    </p>
                 </div>
               )}
